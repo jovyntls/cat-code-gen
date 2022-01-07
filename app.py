@@ -203,6 +203,7 @@ class Cat:
     def __init__(self):
         self.env = Environment()
         self.stack = []
+        self.code = ''
 
 def retrieve_object():
     with open('my_c.pik', "rb") as f:
@@ -216,10 +217,8 @@ def save_object(cat):
 
 
 global cat 
-global s
 cat = Cat()
 save_object(cat)
-s = ['']
 
 app = Flask(__name__)
 print('app')
@@ -232,9 +231,10 @@ def index():
 
 @app.route("/code", methods=["POST"])
 def get_code():
+    print('code')
     global cat
     if not cat.stack:
-        s[0] = ''
+        # s[0] = ''
         vv = VariableAssignment(cat.env)
         cat.stack.append(vv.execute)
         save_object(cat)
@@ -247,7 +247,8 @@ def get_code():
 
 @app.route("/reset")
 def reset_code():
-    s[0] = ''
+    # s[0] = ''
+    cat.code = ''
     vv = VariableAssignment(cat.env)
     cat.stack = [vv.execute]
     return ''
