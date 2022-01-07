@@ -1,5 +1,44 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask
 from flask import request
+import paho.mqtt.client as paho
+from paho import mqtt
+from datetime import datetime
+
+load_dotenv()
+MQTT_USERNAME = os.getenv('MQTT_USERNAME')
+MQTT_PASSWORD = os.getenv('MQTT_PASSWORD')
+MQTT_HOST = os.getenv('MQTT_HOST')
+
+# ------------ MQTT STUFF ----------------
+def on_connect(client, userdata, flags, rc, properties=None):
+    print("CONNACK received with code %s." % rc)
+def on_publish(client, userdata, mid, properties=None):
+    print("mid: " + str(mid))
+def on_subscribe(client, userdata, mid, granted_qos, properties=None):
+    print("Subscribed: " + str(mid) + " " + str(granted_qos))
+def on_message(client, userdata, msg):
+    global last_message
+    last_message = str(msg.payload)
+    print("Message received: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+def print_something():
+    print('test print' + str(datetime.now()) + last_message)
+
+client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
+client.on_connect = on_connect
+client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+client.connect(MQTT_HOST, 8883)
+client.on_subscribe = on_subscribe
+client.on_message = on_message
+client.on_publish = on_publish
+# subscribe to all topics of sensor by using the wildcard "#"
+client.subscribe("sensor/#", qos=1)
+# a single publish, this can also be done in loops, etc.
+client.publish("sensor/temperature", payload="hot", qos=1)
+
+# ----------------------------------------
 
 class Environment:
     def __init__(self):
@@ -172,6 +211,8 @@ s = ['']
 
 app = Flask(__name__)
 
+# client.loop_start()
+
 @app.route("/")
 def index():
     return "Hello World!"
@@ -193,4 +234,10 @@ def reset_code():
     vv = VariableAssignment(cat.env)
     cat.stack = [vv.execute]
     return ''
+
+@app.route("/mqtt")
+def get_last_message():
+    print('/mqtt last message: ', last_message)
+    print_something()
+    return last_message
 
