@@ -20,7 +20,7 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
     print("Subscribed: " + str(mid) + " " + str(granted_qos))
 def on_message(client, userdata, msg):
     global last_message
-    last_message = str(msg.payload)
+    last_message = str(msg.payload) + str(datetime.now())
     print("Message received: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 def print_something():
     print('test print' + str(datetime.now()) + last_message)
