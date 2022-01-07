@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import dill
 from flask import Flask
 from flask import request
 import paho.mqtt.client as paho
@@ -203,10 +204,21 @@ class Cat:
         self.env = Environment()
         self.stack = []
 
+def retrieve_object():
+    with open('my_c.pik', "rb") as f:
+        cat = dill.load(f)
+    return cat
+
+def save_object(cat):
+    with open('my_c.pik', "wb") as f:
+        dill.dump(cat, f)
+    return
+
 
 global cat 
 global s
 cat = Cat()
+save_object(cat)
 s = ['']
 
 app = Flask(__name__)
@@ -220,13 +232,17 @@ def index():
 
 @app.route("/code", methods=["POST"])
 def get_code():
+    global cat
     if not cat.stack:
         s[0] = ''
         vv = VariableAssignment(cat.env)
         cat.stack.append(vv.execute)
+        save_object(cat)
+    cat = retrieve_object()
     ex = cat.stack.pop()
     additional = ex(int(request.args['in']), cat.stack)
     s[0] += additional
+    save_object(cat)
     return s[0]
 
 @app.route("/reset")
