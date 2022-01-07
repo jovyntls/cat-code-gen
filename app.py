@@ -123,6 +123,8 @@ class Number:
         return str(num)
     def close(self):
         return ''
+    def to_string():
+        return 'Number'
 
 class String:
     def __init__(self):
@@ -144,6 +146,8 @@ class String:
         return chr(num + 97)  # pad to start at 'a'
     def close(self):
         return '"'
+    def to_string():
+        return 'String'
 
 class Boolean:
     TOTAL_STAGES = 1
@@ -157,6 +161,8 @@ class Boolean:
         return 'True' if num % 2 == 0 else 'False'
     def close(self):
         return ''
+    def to_string():
+        return 'Boolean'
 
 class Array:
     def __init__(self):
@@ -188,12 +194,16 @@ class Array:
         return self.type().execute(num, stack, env) 
     def close(self):
         return ']'
+    def to_string():
+        return 'Array'
 
 class Type:
     types = [Number, String, Boolean, Array]
 
     def get_type(num):
         return choose_from(num, Type.types)
+    def is_same_type(a, b):
+        return a.to_string() == b.to_string()
 
 class Function:
     def __init__(self):
@@ -407,6 +417,9 @@ def get_code():
 def get_code():
     global cat
     if not cat.stack:
+        previous_code = cat.code
+        cat = Cat()
+        cat.previous_code = previous_code
         starting_function = Function()
         cat.stack.append(starting_function.execute)
         cat.stack.append(starting_function.execute)
