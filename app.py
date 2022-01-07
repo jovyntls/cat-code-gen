@@ -210,8 +210,9 @@ cat = Cat()
 s = ['']
 
 app = Flask(__name__)
+print('app')
 
-# client.loop_start()
+client.loop_start()
 
 @app.route("/")
 def index():
