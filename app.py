@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import dill
 from flask import Flask
 from flask import request
 import paho.mqtt.client as paho
@@ -20,7 +21,7 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
     print("Subscribed: " + str(mid) + " " + str(granted_qos))
 def on_message(client, userdata, msg):
     global last_message
-    last_message = str(msg.payload)
+    last_message = str(msg.payload) + str(datetime.now())
     print("Message received: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 def print_something():
     print('test print' + str(datetime.now()) + last_message)
@@ -202,16 +203,27 @@ class Cat:
     def __init__(self):
         self.env = Environment()
         self.stack = []
+        self.code = ''
+
+def retrieve_object():
+    with open('my_c.pik', "rb") as f:
+        cat = dill.load(f)
+    return cat
+
+def save_object(cat):
+    with open('my_c.pik', "wb") as f:
+        dill.dump(cat, f)
+    return
 
 
 global cat 
-global s
 cat = Cat()
-s = ['']
+save_object(cat)
 
 app = Flask(__name__)
+print('app')
 
-# client.loop_start()
+client.loop_start()
 
 @app.route("/")
 def index():
@@ -219,18 +231,24 @@ def index():
 
 @app.route("/code", methods=["POST"])
 def get_code():
+    print('code')
+    global cat
     if not cat.stack:
-        s[0] = ''
+        # s[0] = ''
         vv = VariableAssignment(cat.env)
         cat.stack.append(vv.execute)
+        save_object(cat)
+    cat = retrieve_object()
     ex = cat.stack.pop()
     additional = ex(int(request.args['in']), cat.stack)
     s[0] += additional
+    save_object(cat)
     return s[0]
 
 @app.route("/reset")
 def reset_code():
-    s[0] = ''
+    # s[0] = ''
+    cat.code = ''
     vv = VariableAssignment(cat.env)
     cat.stack = [vv.execute]
     return ''
