@@ -398,6 +398,11 @@ client.loop_start()
 def index():
     return "Hello World!"
 
+@app.route("/code", methods=["GET"])
+def get_code():
+    cat = retrieve_object()
+    return cat.code
+
 @app.route("/code", methods=["POST"])
 def get_code():
     global cat
