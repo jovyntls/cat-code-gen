@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import dill
 from flask import Flask
 from flask import request
+from flask_cors import CORS
+from flask_cors import cross_origin
 import paho.mqtt.client as paho
 from paho import mqtt
 from datetime import datetime
@@ -405,15 +407,18 @@ print('app')
 client.loop_start()
 
 @app.route("/")
+@cross_origin()
 def index():
     return "Hello World!"
 
 @app.route("/code", methods=["GET"])
+@cross_origin()
 def get_code():
     cat = retrieve_object()
     return cat.code
 
 @app.route("/code", methods=["POST"])
+@cross_origin()
 def get_code():
     global cat
     if not cat.stack:
@@ -432,6 +437,7 @@ def get_code():
     return cat.code
 
 @app.route("/reset")
+@cross_origin()
 def reset_code():
     # s[0] = ''
     cat.code = ''
