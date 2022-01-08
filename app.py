@@ -402,23 +402,21 @@ cat = Cat()
 save_object(cat)
 
 app = Flask(__name__)
+CORS(app)
 print('app')
 
 client.loop_start()
 
 @app.route("/")
-@cross_origin()
 def index():
     return "Hello World!"
 
 @app.route("/code", methods=["GET"])
-@cross_origin()
 def get_code():
     cat = retrieve_object()
     return cat.code
 
 @app.route("/code", methods=["POST"])
-@cross_origin()
 def get_code():
     global cat
     if not cat.stack:
@@ -437,7 +435,6 @@ def get_code():
     return cat.code
 
 @app.route("/reset")
-@cross_origin()
 def reset_code():
     # s[0] = ''
     cat.code = ''
