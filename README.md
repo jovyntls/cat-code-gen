@@ -1,1 +1,1 @@
-https://realpython.com/flask-by-example-part-1-project-setup/#creating-the-python-flask-example-application
+Project details on [devpost](https://devpost.com/software/cats-can-code)
