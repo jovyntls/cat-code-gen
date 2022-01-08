@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-import dill
+import dill 
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -23,8 +23,12 @@ def on_subscribe(client, userdata, mid, granted_qos, properties=None):
     print("Subscribed: " + str(mid) + " " + str(granted_qos))
 def on_message(client, userdata, msg):
     global last_message
+    global cat
     last_message = str(msg.payload) + str(datetime.now())
-    print("Message received: " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
+    if len(msg.payload) > 0 and str(msg.payload)[2:-1].isnumeric():
+        num_input = int(str(msg.payload)[2:-1])
+        mqtt_code(num_input)
+    print("Message received: " + msg.topic + " " + str(msg.payload))
 def print_something():
     print('test print' + str(datetime.now()) + last_message)
 
@@ -39,7 +43,6 @@ client.on_publish = on_publish
 # subscribe to all topics of sensor by using the wildcard "#"
 client.subscribe("sensor/#", qos=1)
 # a single publish, this can also be done in loops, etc.
-client.publish("sensor/temperature", payload="hot", qos=1)
 
 # ----------------------------------------
 
@@ -306,7 +309,7 @@ class Expression:
         self.op = choose_from(num, Expression.ops)
         return ' ' + self.op + ' '
     def choose_rhs(self, num, stack, env):
-        possible_variables = [v for v in env.variables.values() if v.vartype == self.lhs_type] 
+        possible_variables = [v for v in env.variables.values() if Type.is_same_type(v.vartype, self.lhs_type)] 
         if num == 0: # use a new literal instead
             stack.append(self.lhs_type().execute)
             return ''
@@ -397,6 +400,7 @@ def save_object(cat):
     return
 
 
+
 global cat 
 cat = Cat()
 save_object(cat)
@@ -417,7 +421,7 @@ def get_code():
     return cat.code
 
 @app.route("/code", methods=["POST"])
-def get_code():
+def write_code():
     global cat
     if not cat.stack:
         previous_code = cat.code
@@ -434,12 +438,34 @@ def get_code():
     save_object(cat)
     return cat.code
 
+def mqtt_code(num):
+    num -= 1 # since sensors are numbered 1-4
+    global cat
+    if not cat.stack:
+        previous_code = cat.code
+        cat = Cat()
+        cat.previous_code = previous_code
+        starting_function = Function()
+        cat.stack.append(starting_function.execute)
+        cat.stack.append(starting_function.execute)
+        save_object(cat)
+    cat = retrieve_object()
+    ex = cat.stack.pop()
+    additional = ex(num, cat.stack, cat.env)
+    cat.code += additional
+    save_object(cat)
+    return cat.code
+
 @app.route("/reset")
 def reset_code():
-    # s[0] = ''
-    cat.code = ''
-    vv = VariableAssignment(cat.env)
-    cat.stack = [vv.execute]
+    global cat
+    previous_code = cat.code
+    cat = Cat()
+    cat.previous_code = previous_code
+    starting_function = Function()
+    cat.stack.append(starting_function.execute)
+    cat.stack.append(starting_function.execute)
+    save_object(cat)
     return ''
 
 @app.route("/mqtt")
